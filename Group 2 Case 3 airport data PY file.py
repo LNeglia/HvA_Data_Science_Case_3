@@ -9,7 +9,7 @@ import numpy as np
 import plotly.express as px
 import folium
 import streamlit as st
-
+import streamlit.components.v1 as components
 
 # In[ ]:
 
@@ -203,7 +203,8 @@ step_3b_before_after = pd.concat([before, after], axis=1, keys=["before", "after
 # European countries that don't have "Europe/" as their time zone entry 
 extra_europe = ["Atlantic/Canary", "Atlantic/Azores", "Atlantic/Reykjavik"]
 
-is_europe = (schedule_clean["Tz database"].str.startswith("Europe/", na=False) and schedule_clean["Tz database"].isin(extra_europe))
+is_europe = (schedule_clean["Tz database"].str.startswith("Europe/", na=False)
+             | schedule_clean["Tz database"].isin(extra_europe))
 schedule_clean["Region"] = np.where(is_europe, "Europe", "Intercontinental")
 
 step_4a_region_counts = schedule_clean.groupby(["Year", "Region"]).size().unstack()
@@ -545,5 +546,5 @@ step_5a_delay_check
 # Controle dat elke vlucht in de selectie aan Zürich of aan de andere luchthaven is toegewezen
 step_5b_blame_check
 # Folium-kaart met de toegewezen vertragingen per luchthaven, met Zürich in rood voor vertragingen door slecht weer
-step_5c_map
+components.html(step_5c_map._repr_html_(), height=500)
 
