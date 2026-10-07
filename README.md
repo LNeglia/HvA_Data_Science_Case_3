@@ -1,6 +1,7 @@
 # HvA_Data_Science_Case_3
 
 Informatie over vluchten vanuit Zürich in 2019 en 2020
+
 Maak een kolom met vertragingen en bekijk de gegevens uit 06670.csv met betrekking tot het tijdstip, het vliegtuigtype, de landingsbaan, de bestemming, het actuele verkeersvolume en de weersgegevens. Kijk wanneer de vertragingen optreden en zoek naar gemeenschappelijke factoren. Wees in staat om de nauwkeurigheid en mogelijke fouten aan te wijzen. Gebruik de gegevens van 2019 en 2020 apart vanwege corona; zo kunt u nagaan of een situatie die in 2019 tot een vertraging leidde, ook in 2020 vertraging veroorzaakt.
 
 Combineer de vluchtschema's en de luchthavenlijst van ICAO om een ​​kaart te maken van "Waar komen deze vliegtuigen aan of naartoe?". Het verschil is niet relevant, vertragingen hebben gevolgen voor zowel vertrekkende als aankomende vluchten.
