@@ -436,7 +436,7 @@ tab_overview, tab_processing, tab_factors, tab_weather, tab_map, tab_future = st
 
 with tab_overview:
     st.subheader("Vertraging verdeeld over vluchten")
-    st.plotly_chart(px.histogram(region_df, x = "Delay", nbins = 70, title = "Verdeling van vertraging na opschoning", labels = {"Delay": "Vertraging (minuten)"}), use_container_width = True)
+    st.plotly_chart(px.histogram(region_df, x = "Delay", nbins = 70, title = "Verdeling van vertraging na opschoning", labels = {"Delay": "Vertraging (minuten)"}), width = 'stretch')
     st.write("Positief betekent later dan gepland; negatief betekent eerder. Het histogram laat zien hoe vaak kleine en grote afwijkingen voorkomen. Gemiddelde en mediaan samen voorkomen dat alleen uitschieters ons beeld bepalen.")
     summary = region_df.groupby("Year")["Delay"].agg(["count", "mean", "median", "std"]).round(1)
     st.dataframe(summary.rename(columns = {"count": "Aantal", "mean": "Gemiddelde (min)", "median": "Mediaan (min)", "std": "Standaardafwijking (min)"}))
@@ -453,13 +453,13 @@ with tab_overview:
         counts["Jaar"] = str(year)
         all_counts.append(counts)
     volume = pd.concat(all_counts, ignore_index = True)
-    st.plotly_chart(px.line(volume, x = "Scheduled_dt", y = "Aantal", color = "Jaar", title = f"Geplande vliegbewegingen op Zürich per {unit.lower()}", labels = {"Scheduled_dt": "Datum en tijd", "Aantal": f"Vliegbewegingen per {unit.lower()}"}), use_container_width = True)
+    st.plotly_chart(px.line(volume, x = "Scheduled_dt", y = "Aantal", color = "Jaar", title = f"Geplande vliegbewegingen op Zürich per {unit.lower()}", labels = {"Scheduled_dt": "Datum en tijd", "Aantal": f"Vliegbewegingen per {unit.lower()}"}), width = 'stretch')
     peak = volume.loc[volume["Aantal"].idxmax()]
     st.write(f"De drukste getoonde {unit.lower()} begint op {peak['Scheduled_dt']:%d-%m-%Y %H:%M}, met {peak['Aantal']:.0f} bewegingen. Dagen tonen dagelijkse drukte; uren tonen piekuren; maanden maken langetermijnverschillen zichtbaar.")
     st.caption("Volledig ingelezen schema vóór het verwijderen van ontbrekend weer en ontbrekende luchthavenmatches; de regiofilters gelden hier niet. Lege tijdseenheden binnen een jaar tellen als nul, onder de aanname van volledige registratie.")
     with st.expander("Oorspronkelijke tijdgrafiek: afwijking van de gemiddelde vertraging", expanded = True):
         if YEARS:
-            st.plotly_chart(step_4b_time_chart, use_container_width = True)
+            st.plotly_chart(step_4b_time_chart, width = 'stretch')
             st.write("We trekken eerst per jaar het gemiddelde van iedere vertraging af. Daarna nemen we het gemiddelde per uur, weekdag of maand, apart voor landingen (L) en starts (S). Een waarde van +5 betekent vijf minuten boven het jaargemiddelde van de geselecteerde regio's, niet vijf minuten absolute vertraging.")
         else:
             st.info("Selecteer een jaar in de zijbalk.")
@@ -535,7 +535,7 @@ with tab_factors:
     chart_choice = st.selectbox("Kies een vluchtkenmerk", ["Aankomst / vertrek", "Vliegtuigtype", "Baan", "Herkomst / bestemming", "Verkeersdrukte"])
     charts = {"Aankomst / vertrek": (step_4c_lsv, "LSV"), "Vliegtuigtype": (step_4c_aircraft, "ACT"), "Baan": (step_4c_runway, "RWY"), "Herkomst / bestemming": (step_4c_destination, "Org/Des"), "Verkeersdrukte": (step_4c_traffic, "Traffic_bin")}
     fig, column = charts[chart_choice]
-    st.plotly_chart(fig, use_container_width = True)
+    st.plotly_chart(fig, width = 'stretch')
     # Conclusie op basis van precies de categorieën die in de figuur staan.
     shown = set(str(x) for trace in fig.data for x in trace.x)
     effect = delay_effect(region_df, column).reset_index()
@@ -553,23 +553,23 @@ with tab_factors:
 with tab_weather:
     weather_choice = st.selectbox("Welke weeranalyse?", ["Regen", "Wind", "Correlatie per jaar", "Minuten per weereenheid", "Slecht weer tegenover overige dagen"])
     if weather_choice in ["Regen", "Wind"]:
-        st.plotly_chart(step_4c_rain if weather_choice == "Regen" else step_4c_wind, use_container_width = True)
+        st.plotly_chart(step_4c_rain if weather_choice == "Regen" else step_4c_wind, width = 'stretch')
         st.write("We groeperen vluchten op dagelijkse regen of wind en vergelijken per jaar hun gemiddelde afwijking van het jaargemiddelde. Een groep kan ook verschillen in seizoen, drukte of routes; daarmee is het weersverschil nog geen bewezen oorzaak.")
     elif weather_choice == "Correlatie per jaar":
-        st.plotly_chart(step_4d_ratio_chart, use_container_width = True)
+        st.plotly_chart(step_4d_ratio_chart, width = 'stretch')
         st.write("r loopt van −1 tot +1. Positief betekent dat hogere weerwaarden samengaan met meer dagvertraging; negatief betekent het omgekeerde. Een waarde rond nul betekent weinig lineaire samenhang. Iedere dag telt één keer.")
         correlations = step_4d_weather_table["ratio"].stack().dropna()
         if not correlations.empty:
             key = correlations.abs().idxmax()
             st.write(f"**Wat valt op?** Het grootste absolute verband in deze selectie is {key[0]} in {key[1]}, met r = {correlations.loc[key]:.2f}. Dit is samenhang, geen verklaring of zelfstandig voorspelmodel.")
     elif weather_choice == "Minuten per weereenheid":
-        st.plotly_chart(step_4d_per_unit_chart, use_container_width = True)
+        st.plotly_chart(step_4d_per_unit_chart, width = 'stretch')
         st.write("Een aparte rechte lijn wordt aangepast voor iedere weerfactor en ieder jaar. De helling toont minuten vertraging per eenheid van die factor. De hoogtes tussen verschillende factoren zijn niet rechtstreeks vergelijkbaar: temperatuur, wind en luchtdruk hebben verschillende eenheden.")
     else:
         comparison = step_5a_delay_check.reset_index()
         comparison["Year"] = comparison["Year"].astype(str)
         comparison["Weer"] = comparison["Bad_weather"].map({True: "Slecht weer volgens definitie", False: "Overige dagen"})
-        st.plotly_chart(px.bar(comparison, x = "Year", y = "mean", color = "Weer", barmode = "group", hover_data = ["count"], title = "Gemiddelde vertraging op slechtweerdagen en overige dagen", labels = {"Year": "Jaar", "mean": "Gemiddelde vertraging (min)", "count": "Aantal geldige vertragingen"}), use_container_width = True)
+        st.plotly_chart(px.bar(comparison, x = "Year", y = "mean", color = "Weer", barmode = "group", hover_data = ["count"], title = "Gemiddelde vertraging op slechtweerdagen en overige dagen", labels = {"Year": "Jaar", "mean": "Gemiddelde vertraging (min)", "count": "Aantal geldige vertragingen"}), width = 'stretch')
         for year in region_df["Year"].unique():
             if (year, True) in step_5a_delay_check.index and (year, False) in step_5a_delay_check.index:
                 diff = step_5a_delay_check.loc[(year, True), "mean"] - step_5a_delay_check.loc[(year, False), "mean"]
@@ -604,7 +604,7 @@ with tab_future:
         predicted = pd.DataFrame({"Datum": future_dates, "Aantal": [week_pattern.get(d.dayofweek, np.nan) for d in future_dates], "Reeks": "Voorwaardelijke voorspelling"})
         observed = daily_count.tail(28).rename("Aantal").rename_axis("Datum").reset_index()
         observed["Reeks"] = "Waargenomen geplande bewegingen"
-        st.plotly_chart(px.line(pd.concat([observed, predicted]), x = "Datum", y = "Aantal", color = "Reeks", line_dash = "Reeks", title = "Laatste vier weken en voorspelling voor de volgende zeven dagen", labels = {"Datum": "Datum", "Aantal": "Vliegbewegingen per dag"}), use_container_width = True)
+        st.plotly_chart(px.line(pd.concat([observed, predicted]), x = "Datum", y = "Aantal", color = "Reeks", line_dash = "Reeks", title = "Laatste vier weken en voorspelling voor de volgende zeven dagen", labels = {"Datum": "Datum", "Aantal": "Vliegbewegingen per dag"}), width = 'stretch')
         early, late = daily_count.tail(28).head(14).mean(), daily_count.tail(14).mean()
         st.write(f"**Wat valt op?** De eerste helft van de laatste vier weken telt gemiddeld {early:.1f} bewegingen per dag; de tweede helft {late:.1f}. Dat is een {'stijging' if late > early else 'daling' if late < early else 'gelijk niveau'} in deze korte periode.")
         st.write(f"**Voor de toekomst:** als het weekpatroon van de laatste {len(recent)} dagen zich herhaalt, verwachten we ongeveer {predicted['Aantal'].sum():.0f} bewegingen in de zeven dagen na {daily_count.index.max():%d-%m-%Y}. De voorspelling veronderstelt vergelijkbare dienstregeling, weekpatronen en volledige registratie. Zij is een historische vooruitblik, geen actuele voorspelling voor vandaag.")
