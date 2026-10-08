@@ -29,7 +29,7 @@ def data_path(name):
 
 @st.cache_data
 def load_data():
-    schedule_airport = pd.read_csv(data_path("schedule_airport.csv"), na_values = "-")
+    schedule_airport = pd.read_csv(data_path("schedule_airport.zip"), na_values = "-")
     airports = pd.read_csv(
         data_path("airports-extended.csv"),
         names = ["Airport ID", "Name", "City", "Country", "IATA", "ICAO", "Latitude", "Longitude",
@@ -502,15 +502,33 @@ with tab_processing:
         st.dataframe(step_4a_region_counts)
         st.write("De onderstaande factor-, weer- en kaartanalyses gebruiken deze selectie.")
     with st.expander("Stap 4b–4d — Vergelijken met het jaargemiddelde en weer analyseren", expanded = True):
-        st.write("delay_effect berekent per jaar en categorie het aantal vluchten, de gemiddelde vertraging en de afwijking van het jaargemiddelde. We bekijken LSV, vliegtuigtype, baan, herkomst/bestemming, drukte, regen en wind. Bij vliegtuigtype en luchthaven tonen we de 15 hoogste afwijkingen van 2019 onder categorieën die in beide jaren voorkomen; dit zijn niet de 15 drukste categorieën.")
-        st.write("Traffic_bin gebruikt de oorspronkelijke grenzen 0, 20, 40, 60, 80 en 200 bewegingen per uur. Rain_bin groepeert droog, 0–1, 1–5 en meer dan 5 tot 100 mm volgens de kolomnamen van het origineel. Wind wordt verdeeld op kwartielgrenzen van de geselecteerde vluchtrijen. Bij gelijke kwartielgrenzen gebruiken we minder groepen om een fout te voorkomen. Waarden buiten de ingestelde grenzen vallen niet in een groep.")
-        st.write("Voor weather_ratios middelen we de vertraging per dag en jaar en nemen we één weerwaarde per dag. Daardoor telt iedere dag één keer in de correlatie. Pearson r beschrijft lineaire samenhang; de helling van np.polyfit geeft minuten verandering per eenheid weerwaarde. Dit zijn afzonderlijke verbanden zonder correctie voor andere factoren, geen oorzakelijke effecten.")
+        st.write("Voor elke vlucht wordt de gemiddelde vertraging van dat jaar afgetrokken van de eigen vertraging. Dit geeft het 'effect': hoeveel minuten de vlucht langer of korter was dan een typische vlucht in dat jaar. Door de resultaten te vergelijken met het eigen gemiddelde blijven 2019 en 2020 vergelijkbaar, ondanks het feit dat er in 2020 veel minder vluchten waren en de vertragingen over het algemeen lager waren. De lijngrafiek toont dit effect per uur, weekdag of maand, zoals gekozen in de zijbalk, met aparte lijnen voor aankomsten en vertrekken en voor elk geselecteerd jaar.")
+        st.write("Hetzelfde effect wordt berekend per categorie van een enkele factor en weergegeven als een staafdiagram per jaar. De factoren zijn aankomsten versus vertrekken, vliegtuigtype, landingsbaan, luchthaven van herkomst/bestemming, verkeersvolume per uur, dagelijkse neerslag en dagelijkse windsnelheid.")    
+        st.write("Voor vliegtuigtype en bestemming worden alleen categorieën weergegeven die in beide jaren voorkomen, beperkt tot de 15 met het grootste effect in 2019. Elke grafiek bekijkt één factor afzonderlijk, dus overlapping tussen factoren, zoals de keuze van de landingsbaan afhankelijk van de wind, moet in acht worden genomen bij het interpreteren ervan.")
+        st.write("De vluchten worden vervolgens per dag gegroepeerd en de gemiddelde vertraging van elke dag wordt vergeleken met de weerwaarden van die dag. Voor elke weerkolom levert dit twee getallen per jaar op:")
+        st.write("* De ratio (correlatie): hoe consistent de vertraging beweegt met die weerwaarde.")
+        st.write("* De helling: hoeveel minuten vertraging één eenheid van die weerwaarde toevoegt of verwijdert.")
+        st.write("Beide worden weergegeven in een tabel en als staafdiagrammen. Omdat de weergegevens dagelijks zijn, worden korte gebeurtenissen zoals een korte onweersbui gemiddeld, waardoor de weereffecten waarschijnlijk worden onderschat.")
     with st.expander("Stap 5 — Slecht weer definiëren en de Folium-kaart voorbereiden", expanded = True):
-        st.write("Op dagniveau berekenen we de 90e percentielen voor regen en wind en het 10e percentiel voor luchtdruk. Storm betekent lage druk én regen boven de grens. Ice_risk betekent temperatuur ≤ 0 én neerslag > 0. Strong_wind betekent wind boven de grens. Bad_weather is waar wanneer minstens één van deze drie voorwaarden geldt. Dit zijn jullie gekozen indicatoren, geen officieel vastgestelde storm- of ijzelwaarnemingen.")
+        st.write("Slecht weer wordt gedefinieerd aan de hand van vier dagelijkse weerwaarden: neerslag, windsnelheid, luchtdruk en temperatuur. Wanneer een waarde geen natuurlijke grens heeft, wordt de grens afgeleid van de gegevens zelf, berekend over dagen in plaats van vluchten, zodat drukke dagen niet zwaarder wegen:")
+        st.write("""1. Neerslag: de 10% natste dagen.
+2. Windsnelheid: de 10% winderigste dagen.
+3. Luchtdruk: de 10% dagen met de laagste luchtdruk.
+4. Temperatuur: het vriespunt, 0°C.""")
         st.dataframe(step_5a_boundaries)
+        st.write("""Deze waarden worden gecombineerd tot drie condities:
+1. Storm: behorend tot de 10% dagen met de laagste luchtdruk en tevens behorend tot de 10% natste dagen.
+2. IJsgevaar: een temperatuur van vriespunt of lager in combinatie met neerslag.
+3. Harde wind: behorend tot de 10% winderigste dagen.""")
         st.dataframe(step_5a_condition_days)
-        st.write("Voor het gekozen kaartjaar wijst de oorspronkelijke code bewegingen op slechtweerdagen toe aan LSZH (Zürich), en andere bewegingen aan hun Org/Des-luchthaven. We behouden deze logica zodat de kaart overeenkomt met jullie code, maar benoemen dit als een scenarioaanname: het weer bewijst niet waar een vertraging veroorzaakt is.")
+        st.write("Elke vlucht wordt vervolgens 'toegewezen' aan Zürich of de andere locatie. Als de vlucht plaatsvindt op een dag met 'slecht weer', wordt de vertraging toegeschreven aan Zürich, anders aan de andere luchthaven.")
         st.dataframe(step_5b_blame_check)
+        st.write("""Folium wordt vervolgens gebruikt om een ​​cirkeldiagram te maken met de vertragingsgegevens. Zürich is rood en de andere luchthavens zijn blauw. De oppervlakte van de cirkel geeft het aantal vertragingen of de gemiddelde vertraging weer, die in de zijbalk kan worden gekozen.
+De belangrijkste aannames voor dit gedeelte zijn:
+* Als een dag is gemarkeerd als 'slecht weer', wordt elke vertraging veroorzaakt door het weer.
+* Alle vertragingen op dagen met 'normaal' weer worden veroorzaakt door de andere luchthaven.
+
+Dit betekent dat als een vertraging in Zürich wordt veroorzaakt door iets anders dan het weer, dit wordt genegeerd. Dit betekent ook dat als het slechte weer op een dag samenviel met een moment waarop een vlucht niet vertrok of aankwam en de oorzaak van de vertraging bij de andere luchthaven lag, deze ten onrechte aan Zürich wordt toegewezen.""")
 
 with tab_factors:
     st.write("De balken tonen afwijkingen van het jaargemiddelde. De aantallen en absolute gemiddelde vertraging staan bij het aanwijzen van een balk. Een positief verschil betekent dat die categorie gemiddeld later is dan de totale selectie in hetzelfde jaar.")
