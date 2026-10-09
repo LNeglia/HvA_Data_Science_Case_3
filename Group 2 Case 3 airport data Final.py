@@ -582,7 +582,7 @@ with tab_weather:
 with tab_map:
     st.subheader(f"Folium-kaart: toegewezen vertraging in {MAP_YEAR}")
     st.write("De kaart volgt het oorspronkelijke toewijzingsscenario: slechtweerdagen worden bij Zürich gegroepeerd, andere dagen bij de herkomst- of bestemmingsluchthaven. Rood is Zürich, blauw zijn de overige luchthavens. Puntgrootte is gekoppeld aan de gekozen grootheid in de zijbalk.")
-    components.html(step_5c_map._repr_html_(), height = 550)
+    st.iframe(step_5c_map.get_root().render(), height = 550)
     st.write("Bij 'Number of delays' wordt de cirkel groter als meer bewegingen een positieve vertraging hebben. Bij 'Average delay' wordt de cirkel groter bij een hogere gemiddelde vertraging. Negatieve gemiddelden krijgen de minimale grootte. De straal schaalt met de wortel van de waarde, met een minimum en maximum; lees de tooltip voor exacte waarden.")
     st.write("Het percentage in de tooltip is het aandeel van deze luchthaven in alle toegewezen vertraagde bewegingen, niet het percentage vertraagde vluchten binnen die luchthaven. De kleur onderscheidt het scenario; de grootte encodeert de grootheid.")
     
@@ -601,7 +601,7 @@ with tab_future:
         recent = daily_count.tail(56)
         week_pattern = recent.groupby(recent.index.dayofweek).mean()
         future_dates = pd.date_range(daily_count.index.max() + pd.Timedelta(days = 1), periods = 7)
-        predicted = pd.DataFrame({"Datum": future_dates, "Aantal": [week_pattern.get(d.dayofweek, np.nan) for d in future_dates], "Reeks": "Voorwaardelijke voorspelling"})
+        predicted = round(pd.DataFrame({"Datum": future_dates, "Aantal": [week_pattern.get(d.dayofweek, np.nan) for d in future_dates], "Reeks": "Voorwaardelijke voorspelling"}),1)
         observed = daily_count.tail(28).rename("Aantal").rename_axis("Datum").reset_index()
         observed["Reeks"] = "Waargenomen geplande bewegingen"
         st.plotly_chart(px.line(pd.concat([observed, predicted]), x = "Datum", y = "Aantal", color = "Reeks", line_dash = "Reeks", title = "Laatste vier weken en voorspelling voor de volgende zeven dagen", labels = {"Datum": "Datum", "Aantal": "Vliegbewegingen per dag"}), width = 'stretch')
@@ -616,6 +616,6 @@ with tab_future:
         st.write(f"Een controle op de laatste 14 dagen, met uitsluitend eerdere dagen als trainingsdata, geeft MAE = {mae:.1f} bewegingen per dag. MAE is de gemiddelde absolute fout; het is geen betrouwbaarheidsinterval.")
         st.write("Bij grote veranderingen zoals die tussen 2019 en 2020 kan de aanname mislukken. We trekken daarom geen vaste groeitrend door. Ook weersomstandigheden, seizoenen en beleidswijzigingen kunnen het toekomstige volume veranderen.")
         with st.expander("Dagwaarden van de vooruitblik", expanded = True):
-            st.dataframe(predicted.drop(columns = "Reeks").round(1), hide_index = True)
+            st.dataframe(predicted.drop(columns = "Reeks"), hide_index = True)
     else:
         st.info("Te weinig dagen voor een bruikbare weekdagvoorspelling.")
