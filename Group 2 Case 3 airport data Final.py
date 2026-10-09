@@ -601,7 +601,8 @@ with tab_future:
         recent = daily_count.tail(56)
         week_pattern = recent.groupby(recent.index.dayofweek).mean()
         future_dates = pd.date_range(daily_count.index.max() + pd.Timedelta(days = 1), periods = 7)
-        predicted = pd.DataFrame({"Datum": future_dates, "Aantal": [week_pattern.get(d.dayofweek, np.nan) for d in future_dates], "Reeks": "Voorwaardelijke voorspelling"}).round(1)
+        predicted = pd.DataFrame({"Datum": future_dates, "Aantal": [week_pattern.get(d.dayofweek, np.nan) for d in future_dates], "Reeks": "Voorwaardelijke voorspelling"})
+        predicted["Aantal"] = predicted["Aantal"].round(1)
         observed = daily_count.tail(28).rename("Aantal").rename_axis("Datum").reset_index()
         observed["Reeks"] = "Waargenomen geplande bewegingen"
         st.plotly_chart(px.line(pd.concat([observed, predicted]), x = "Datum", y = "Aantal", color = "Reeks", line_dash = "Reeks", title = "Laatste vier weken en voorspelling voor de volgende zeven dagen", labels = {"Datum": "Datum", "Aantal": "Vliegbewegingen per dag"}), width = 'stretch')
